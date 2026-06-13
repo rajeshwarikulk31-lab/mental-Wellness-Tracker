@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import useSWR from "swr";
 import type { Emotion } from "@/constants/constants";
 import type { MoodLog } from "@/types";
