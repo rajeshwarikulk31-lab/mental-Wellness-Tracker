@@ -63,11 +63,11 @@ export function CrisisModal({ isOpen, message, onClose }: CrisisModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="crisis-overlay" aria-modal="true" role="dialog" aria-labelledby="crisis-title">
+    <div className="crisis-overlay" aria-modal="true" role="dialog" aria-labelledby="crisis-title" aria-describedby="crisis-desc">
       <div className="crisis-modal" ref={modalRef} role="alert">
         <div className="crisis-icon" aria-hidden="true">💛</div>
         <h2 id="crisis-title" className="crisis-title">You&apos;re Not Alone</h2>
-        <p className="crisis-message">{message}</p>
+        <p id="crisis-desc" className="crisis-message">{message}</p>
         <div className="crisis-helpline-card">
           <p className="crisis-helpline-label">Talk to someone who cares:</p>
           <a

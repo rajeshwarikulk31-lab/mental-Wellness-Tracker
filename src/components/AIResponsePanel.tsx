@@ -44,6 +44,7 @@ export function AIResponsePanel({
         aria-live="polite"
         aria-busy={isLoading || isStreaming}
         aria-atomic="false"
+        aria-relevant="additions text"
       >
         {isLoading && !isStreaming && (
           <div className="typing-indicator" aria-label="MindEase is thinking">
