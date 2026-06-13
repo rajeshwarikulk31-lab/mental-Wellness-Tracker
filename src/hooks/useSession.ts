@@ -29,25 +29,6 @@ export function useSession(): UseSessionReturn {
   const [isOnboarded, setIsOnboarded] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize session from localStorage or create new
-  useEffect(() => {
-    const stored = localStorage.getItem("mindease_session");
-    if (stored) {
-      try {
-        const session = JSON.parse(stored);
-        const elapsed = Date.now() - session.lastActive;
-        if (elapsed < SESSION_TIMEOUT_MS) {
-          setSelectedExam(session.exam);
-          setIsOnboarded(true);
-          resetTimer();
-          return;
-        }
-      } catch {
-        // Corrupted session — create new
-      }
-    }
-  }, []);
-
   /** Resets the session expiry timer */
   const resetTimer = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -55,6 +36,43 @@ export function useSession(): UseSessionReturn {
       setIsSessionActive(false);
     }, SESSION_TIMEOUT_MS);
   }, []);
+
+  /** Checks for an active session on mount */
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch("/api/session");
+        if (!res.ok) throw new Error("No session");
+        
+        const data = await res.json();
+        const session: SessionData = data.session;
+        
+        const elapsed = Date.now() - session.lastActive;
+        if (elapsed < SESSION_TIMEOUT_MS) {
+          // Instead of calling setState directly, wait for next tick if needed, 
+          // or just call them, but Next.js complains if we do this synchronously.
+          // Since this is async, it should be fine, but the linter complains.
+          // Wait, the linter says "Calling setState synchronously within an effect".
+          // Because the await makes it asynchronous, it's fine. Wait, the error was "Calling setState synchronously within an effect".
+          // Actually, if we just put it in a timeout or ignore the rule. Let's disable the rule for this block.
+          setSelectedExam(session.exam);
+          setIsOnboarded(true);
+          resetTimer();
+          return;
+        }
+      } catch {
+        // Fall through to inactive session
+      }
+
+      setIsSessionActive(false);
+    };
+
+    checkSession();
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [resetTimer]);
 
   /** Persists session state to localStorage */
   const persistSession = useCallback(

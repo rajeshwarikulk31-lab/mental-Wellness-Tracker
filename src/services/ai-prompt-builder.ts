@@ -110,7 +110,7 @@ export function buildMindfulnessPrompt(
 
 export function buildHistoricalInsightsPrompt(
   journals: string[],
-  aggregates: any[]
+  aggregates: Record<string, unknown>[]
 ): string {
   return [
     `The student has provided ${journals.length} journal entries over the past week.`,

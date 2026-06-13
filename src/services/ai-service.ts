@@ -204,8 +204,8 @@ import { HistoricalInsightsSchema } from "@/types/schemas";
 
 export async function generateHistoricalInsights(
   journals: string[],
-  aggregates: any[]
-): Promise<any> {
+  aggregates: Record<string, unknown>[]
+): Promise<Record<string, unknown> | null> {
   try {
     const prompt = buildHistoricalInsightsPrompt(journals, aggregates);
     const response = await callGemini(prompt);

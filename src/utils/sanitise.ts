@@ -4,7 +4,7 @@
  * and unusual Unicode from user input before processing or sending to AI.
  */
 
-import { JOURNAL_MAX_CHARS, EMOTIONS, MOOD_SCALE } from "@/constants/constants";
+import { JOURNAL_MAX_CHARS, EMOTIONS, MOOD_SCALE, SUPPORTED_EXAMS } from "@/constants/constants";
 import type { Emotion } from "@/constants/constants";
 import { ValidationError } from "@/types";
 
@@ -125,8 +125,7 @@ export function detectPromptInjection(text: string): boolean {
  * @throws ValidationError if not a supported exam
  */
 export function validateExam(exam: string): void {
-  const { SUPPORTED_EXAMS } = require("@/constants/constants");
-  if (!SUPPORTED_EXAMS.includes(exam)) {
+  if (!(SUPPORTED_EXAMS as readonly string[]).includes(exam)) {
     throw new ValidationError(
       `Invalid exam: "${exam}". Must be one of: ${SUPPORTED_EXAMS.join(", ")}`,
       "exam"

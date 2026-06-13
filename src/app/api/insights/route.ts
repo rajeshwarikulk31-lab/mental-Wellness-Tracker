@@ -77,7 +77,7 @@ function identifyTopStressors(aggregates: DailyAggregate[]): string[] {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const userId = request.headers.get("x-session-id");
-    const { searchParams } = new URL(request.url);
+    // Removed unused searchParams
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
        aiInsights = await generateHistoricalInsights(journals, dailyAggregates);
     }
 
-    const insights: InsightsData & { aiAnalysis?: any } = {
+    const insights: InsightsData & { aiAnalysis?: Record<string, unknown> } = {
       dailyAggregates,
       overallTrend: calculateTrend(dailyAggregates),
       topStressors: identifyTopStressors(dailyAggregates),

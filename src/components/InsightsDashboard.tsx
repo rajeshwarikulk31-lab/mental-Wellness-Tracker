@@ -11,7 +11,7 @@ import type { Emotion } from "@/constants/constants";
 import type { InsightsData, DailyAggregate } from "@/types";
 
 interface InsightsDashboardProps {
-  insights: (InsightsData & { aiAnalysis?: any }) | null;
+  insights: (InsightsData & { aiAnalysis?: Record<string, unknown> }) | null;
   isLoading: boolean;
   hasError: boolean;
   onRefresh: () => void;

@@ -112,8 +112,8 @@ export function useAICompanion() {
             }
           }
         }
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== 'AbortError') {
           setHasError(true);
           setErrorMessage("I'm having trouble connecting right now. Please try again in a moment. 💛");
           setMessages((prev) => {
