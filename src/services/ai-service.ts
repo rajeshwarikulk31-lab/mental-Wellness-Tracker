@@ -20,6 +20,7 @@ import {
   getSystemPrompt,
 } from "./ai-prompt-builder";
 import { v4 as uuidv4 } from "uuid";
+import { AIResponseSchema } from "@/types/schemas";
 
 /** In-memory response cache: hash → { response, timestamp } */
 const responseCache = new Map<string, { response: string; timestamp: number }>();
@@ -137,8 +138,21 @@ export async function analyzeJournalEntry(
     }
 
     const response = await callGemini(prompt);
-    cacheResponse(promptHash, response);
-    return buildAIResponse(response);
+    
+    // Parse JSON safely
+    let parsedText = response;
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsedData = AIResponseSchema.parse(JSON.parse(jsonMatch[0]));
+        parsedText = `${parsedData.emotional_summary}\n\nSuggested Action: ${parsedData.recommended_actions?.[0] || 'Take a moment to breathe.'}`;
+      }
+    } catch (e) {
+      logError(e as Error, { context: "zod_validation_failed" });
+    }
+
+    cacheResponse(promptHash, parsedText);
+    return buildAIResponse(parsedText);
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { context: "analyze_journal" });
     throw error;
@@ -182,6 +196,28 @@ export async function generateMindfulnessExercise(
   } catch (error) {
     logError(error instanceof Error ? error : new Error(String(error)), { context: "mindfulness_gen" });
     throw error;
+  }
+}
+
+import { buildHistoricalInsightsPrompt } from "./ai-prompt-builder";
+import { HistoricalInsightsSchema } from "@/types/schemas";
+
+export async function generateHistoricalInsights(
+  journals: string[],
+  aggregates: any[]
+): Promise<any> {
+  try {
+    const prompt = buildHistoricalInsightsPrompt(journals, aggregates);
+    const response = await callGemini(prompt);
+    
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return HistoricalInsightsSchema.parse(JSON.parse(jsonMatch[0]));
+    }
+    return null;
+  } catch (error) {
+    logError(error instanceof Error ? error : new Error(String(error)), { context: "historical_insights" });
+    return null;
   }
 }
 

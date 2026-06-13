@@ -30,10 +30,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     recordRequest(sessionId);
 
     const body = await request.json();
-    const { userId, moodScore, emotion, note = "" } = body;
+    const { moodScore, emotion, note = "" } = body;
+    const userId = sessionId;
 
-    if (!userId || moodScore === undefined || !emotion) {
-      return NextResponse.json({ error: "Missing required fields: userId, moodScore, emotion" }, { status: 400 });
+    if (moodScore === undefined || !emotion) {
+      return NextResponse.json({ error: "Missing required fields: moodScore, emotion" }, { status: 400 });
     }
 
     validateMoodScore(moodScore);
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = request.headers.get("x-session-id");
     const page = parseInt(searchParams.get("page") || "1", 10);
     const pageSize = parseInt(searchParams.get("pageSize") || "30", 10);
 

@@ -11,7 +11,6 @@ import type { SupportedExam } from "@/constants/constants";
 import { v4 as uuidv4 } from "uuid";
 
 interface UseSessionReturn {
-  userId: string;
   isSessionActive: boolean;
   selectedExam: SupportedExam | null;
   setSelectedExam: (exam: SupportedExam) => void;
@@ -25,7 +24,6 @@ interface UseSessionReturn {
  * Persists userId and exam preference in localStorage.
  */
 export function useSession(): UseSessionReturn {
-  const [userId, setUserId] = useState<string>("");
   const [isSessionActive, setIsSessionActive] = useState(true);
   const [selectedExam, setSelectedExam] = useState<SupportedExam | null>(null);
   const [isOnboarded, setIsOnboarded] = useState(false);
@@ -39,7 +37,6 @@ export function useSession(): UseSessionReturn {
         const session = JSON.parse(stored);
         const elapsed = Date.now() - session.lastActive;
         if (elapsed < SESSION_TIMEOUT_MS) {
-          setUserId(session.userId);
           setSelectedExam(session.exam);
           setIsOnboarded(true);
           resetTimer();
@@ -49,8 +46,6 @@ export function useSession(): UseSessionReturn {
         // Corrupted session — create new
       }
     }
-    const newUserId = uuidv4();
-    setUserId(newUserId);
   }, []);
 
   /** Resets the session expiry timer */
@@ -66,11 +61,11 @@ export function useSession(): UseSessionReturn {
     (exam: SupportedExam | null) => {
       localStorage.setItem(
         "mindease_session",
-        JSON.stringify({ userId, exam, lastActive: Date.now() })
+        JSON.stringify({ exam, lastActive: Date.now() })
       );
       resetTimer();
     },
-    [userId, resetTimer]
+    [resetTimer]
   );
 
   const completeOnboarding = useCallback(
@@ -84,7 +79,6 @@ export function useSession(): UseSessionReturn {
 
   const resetSession = useCallback(() => {
     localStorage.removeItem("mindease_session");
-    setUserId(uuidv4());
     setSelectedExam(null);
     setIsOnboarded(false);
     setIsSessionActive(true);
@@ -93,7 +87,7 @@ export function useSession(): UseSessionReturn {
   // Update lastActive on any user interaction
   useEffect(() => {
     const updateActivity = () => {
-      if (userId && selectedExam) {
+      if (selectedExam) {
         persistSession(selectedExam);
       }
     };
@@ -104,10 +98,10 @@ export function useSession(): UseSessionReturn {
       window.removeEventListener("keydown", updateActivity);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [userId, selectedExam, persistSession]);
+  }, [selectedExam, persistSession]);
 
   return {
-    userId, isSessionActive, selectedExam, setSelectedExam,
+    isSessionActive, selectedExam, setSelectedExam,
     isOnboarded, completeOnboarding, resetSession,
   };
 }

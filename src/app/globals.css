@@ -1158,8 +1158,12 @@ label {
 }
 
 @media (max-width: 480px) {
-  .stat-cards { grid-template-columns: 1fr; }
+  .hero h1 { font-size: var(--font-size-3xl); }
+  .feature-grid { grid-template-columns: 1fr; }
   .exam-grid { grid-template-columns: 1fr; }
+  .emotion-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-cards { grid-template-columns: 1fr; }
+  .crisis-modal { width: 95%; padding: var(--space-4); }
   .nav-label { font-size: 9px; }
   .duration-selector { flex-wrap: wrap; justify-content: center; }
 }
@@ -1167,4 +1171,16 @@ label {
 @media (min-width: 1024px) {
   .container { max-width: 900px; }
   .emotion-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* --------------------------------------- */
+/*           ACCESSIBILITY (A11Y)         */
+/* --------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

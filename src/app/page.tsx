@@ -24,8 +24,8 @@ import Link from "next/link";
  * Returning users: feature navigation cards.
  */
 export default function HomePage() {
-  const { userId, isOnboarded, selectedExam, completeOnboarding } = useSession();
-  const { isCrisisDetected, crisisMessage, setSelectedEmotion, selectedEmotion, moodScore, setMoodScore, logMood } = useMoodLog(userId);
+  const { isOnboarded, selectedExam, completeOnboarding } = useSession();
+  const { isCrisisDetected, crisisMessage, setSelectedEmotion, selectedEmotion, moodScore, setMoodScore, logMood } = useMoodLog();
   const [onboardingExam, setOnboardingExam] = useState<SupportedExam | null>(null);
 
   const handleGetStarted = async () => {

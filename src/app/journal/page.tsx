@@ -23,8 +23,8 @@ import type { Emotion } from "@/constants/constants";
  * Analysis triggered on save (not per keystroke) for efficiency.
  */
 export default function JournalPage() {
-  const { userId, selectedExam } = useSession();
-  const journal = useJournal(userId);
+  const { selectedExam } = useSession();
+  const journal = useJournal();
   const [emotion, setEmotion] = useState<Emotion | null>(null);
   const [moodScore, setMoodScore] = useState(5);
 

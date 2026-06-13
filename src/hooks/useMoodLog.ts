@@ -1,38 +1,13 @@
-/**
- * @fileoverview Mood logging hook with optimistic UI updates.
- * Updates UI immediately on mood log, syncs to backend in background.
- */
-
 "use client";
 
 import { useState, useCallback } from "react";
+import useSWR from "swr";
 import type { Emotion } from "@/constants/constants";
 import type { MoodLog } from "@/types";
 
-interface UseMoodLogReturn {
-  selectedEmotion: Emotion | null;
-  moodScore: number;
-  note: string;
-  isLogging: boolean;
-  hasError: boolean;
-  errorMessage: string | null;
-  isCrisisDetected: boolean;
-  crisisMessage: { message: string; helpline: string } | null;
-  moodHistory: MoodLog[];
-  isLoadingHistory: boolean;
-  setSelectedEmotion: (emotion: Emotion) => void;
-  setMoodScore: (score: number) => void;
-  setNote: (note: string) => void;
-  logMood: () => Promise<void>;
-  loadHistory: (page?: number) => Promise<void>;
-}
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-/**
- * Hook for mood logging with optimistic updates.
- * UI updates immediately; backend sync happens in background.
- * @param userId - Current user's ID
- */
-export function useMoodLog(userId: string): UseMoodLogReturn {
+export function useMoodLog() {
   const [selectedEmotion, setSelectedEmotion] = useState<Emotion | null>(null);
   const [moodScore, setMoodScore] = useState(5);
   const [note, setNote] = useState("");
@@ -41,22 +16,28 @@ export function useMoodLog(userId: string): UseMoodLogReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCrisisDetected, setIsCrisisDetected] = useState(false);
   const [crisisMessage, setCrisisMessage] = useState<{ message: string; helpline: string } | null>(null);
-  const [moodHistory, setMoodHistory] = useState<MoodLog[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  
+  // Use SWR for caching and automatic revalidation
+  const { data, mutate, error } = useSWR('/api/mood', fetcher);
+  const moodHistory: MoodLog[] = data?.data || [];
+  const isLoadingHistory = !data && !error;
 
   const logMood = useCallback(async () => {
     if (!selectedEmotion) return;
 
-    // Optimistic UI update — add to history immediately
+    // Optimistic UI update
     const optimisticLog: MoodLog = {
       id: `temp-${Date.now()}`,
-      userId,
+      userId: "optimistic",
       moodScore,
       emotion: selectedEmotion,
       note,
       createdAt: new Date().toISOString(),
     };
-    setMoodHistory((prev) => [optimisticLog, ...prev]);
+    
+    // Mutate SWR cache optimistically without revalidating immediately
+    mutate({ data: [optimisticLog, ...moodHistory] }, false);
+    
     setIsLogging(true);
     setHasError(false);
     setIsCrisisDetected(false);
@@ -65,57 +46,39 @@ export function useMoodLog(userId: string): UseMoodLogReturn {
     try {
       const response = await fetch("/api/mood", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-session-id": userId },
-        body: JSON.stringify({ userId, moodScore, emotion: selectedEmotion, note }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moodScore, emotion: selectedEmotion, note }),
       });
 
-      const data = await response.json();
+      const resData = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to log mood");
+        throw new Error(resData.error || "Failed to log mood");
       }
 
-      if (data.isCrisisDetected) {
+      if (resData.isCrisisDetected) {
         setIsCrisisDetected(true);
-        setCrisisMessage(data.crisis);
+        setCrisisMessage(resData.crisis);
       }
 
-      // Replace optimistic entry with real one
-      if (data.moodLog) {
-        setMoodHistory((prev) =>
-          prev.map((log) => (log.id === optimisticLog.id ? data.moodLog : log))
-        );
-      }
-
-      // Reset form
+      // Revalidate to sync with real DB data
+      mutate();
       setNote("");
-    } catch (error) {
-      // Revert optimistic update on failure
-      setMoodHistory((prev) => prev.filter((log) => log.id !== optimisticLog.id));
+    } catch (err) {
+      // Revert on failure by triggering a revalidation
+      mutate();
       setHasError(true);
-      setErrorMessage(error instanceof Error ? error.message : "Failed to log mood");
+      setErrorMessage(err instanceof Error ? err.message : "Failed to log mood");
     } finally {
       setIsLogging(false);
     }
-  }, [userId, moodScore, selectedEmotion, note]);
+  }, [moodScore, selectedEmotion, note, moodHistory, mutate]);
 
-  const loadHistory = useCallback(
-    async (page: number = 1) => {
-      setIsLoadingHistory(true);
-      try {
-        const response = await fetch(`/api/mood?userId=${userId}&page=${page}`);
-        const data = await response.json();
-        if (response.ok) {
-          setMoodHistory(data.data || []);
-        }
-      } catch {
-        setHasError(true);
-      } finally {
-        setIsLoadingHistory(false);
-      }
-    },
-    [userId]
-  );
+  // Keep loadHistory for backwards compatibility with UI components if they call it explicitly
+  const loadHistory = useCallback(async (page: number = 1) => {
+    // SWR handles this, so we just trigger a revalidation if requested
+    await mutate();
+  }, [mutate]);
 
   return {
     selectedEmotion, moodScore, note, isLogging, hasError, errorMessage,

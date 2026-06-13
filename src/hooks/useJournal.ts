@@ -1,121 +1,92 @@
-/**
- * @fileoverview Journal management hook with debounced save and optimistic updates.
- * Triggers AI analysis only on explicit save, not on every keystroke.
- */
-
 "use client";
 
-import { useState, useCallback, useRef } from "react";
-import { JOURNAL_MAX_CHARS, DEBOUNCE_DELAY_MS } from "@/constants/constants";
-import type { Emotion, SupportedExam } from "@/constants/constants";
-import type { JournalEntry, AIResponse } from "@/types";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
+import type { JournalEntry } from "@/types";
+import type { SupportedExam, Emotion } from "@/constants/constants";
 
-interface UseJournalReturn {
-  content: string;
-  setContent: (value: string) => void;
-  charCount: number;
-  isOverLimit: boolean;
-  isSaving: boolean;
-  hasError: boolean;
-  errorMessage: string | null;
-  aiAnalysis: AIResponse | null;
-  isCrisisDetected: boolean;
-  crisisMessage: { message: string; helpline: string } | null;
-  saveEntry: (mood: number, emotion: Emotion, exam: SupportedExam) => Promise<void>;
-  entries: JournalEntry[];
-  isLoadingEntries: boolean;
-  loadEntries: (page?: number) => Promise<void>;
-}
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
-/**
- * Hook for journal entry management.
- * Debounces saves, handles AI analysis, and crisis detection.
- * @param userId - Current user's ID
- */
-export function useJournal(userId: string): UseJournalReturn {
+export function useJournal() {
   const [content, setContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [aiAnalysis, setAiAnalysis] = useState<AIResponse | null>(null);
   const [isCrisisDetected, setIsCrisisDetected] = useState(false);
   const [crisisMessage, setCrisisMessage] = useState<{ message: string; helpline: string } | null>(null);
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
-  const [isLoadingEntries, setIsLoadingEntries] = useState(false);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // SWR handles fetching and caching the history
+  const { data, mutate, error } = useSWR('/api/journal', fetcher);
+  const history: JournalEntry[] = data?.data || [];
+  const isLoadingHistory = !data && !error;
+
+  const isOverLimit = content.length > 5000;
   const charCount = content.length;
-  const isOverLimit = charCount > JOURNAL_MAX_CHARS;
 
-  const saveEntry = useCallback(
-    async (mood: number, emotion: Emotion, exam: SupportedExam) => {
-      if (!content.trim() || isOverLimit) return;
+  const saveEntry = useCallback(async (mood: number, emotion: Emotion, exam: SupportedExam) => {
+    if (!content.trim() || isOverLimit) return;
 
-      setIsSaving(true);
-      setHasError(false);
-      setErrorMessage(null);
-      setIsCrisisDetected(false);
-      setCrisisMessage(null);
+    setIsSaving(true);
+    setHasError(false);
+    setIsCrisisDetected(false);
+    setCrisisMessage(null);
 
-      try {
-        const response = await fetch("/api/journal", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-session-id": userId },
-          body: JSON.stringify({ content, mood, emotion, exam, userId }),
-        });
+    // Optimistic UI update
+    const optimisticEntry = {
+      id: `temp-${Date.now()}`,
+      userId: "optimistic",
+      content,
+      mood,
+      emotion,
+      exam,
+      aiAnalysis: "Analyzing your entry...",
+      isCrisisDetected: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      encryptedContent: "",
+    };
+    
+    mutate({ data: [optimisticEntry, ...history] }, false);
 
-        const data = await response.json();
+    try {
+      const response = await fetch("/api/journal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, mood, emotion, exam }),
+      });
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to save journal entry");
-        }
+      const resData = await response.json();
 
-        if (data.isCrisisDetected) {
-          setIsCrisisDetected(true);
-          setCrisisMessage(data.crisis);
-        } else if (data.analysis) {
-          setAiAnalysis({
-            content: data.analysis,
-            isCrisisDetected: false,
-            suggestedAction: null,
-            timestamp: new Date().toISOString(),
-          });
-        }
-
-        setContent("");
-      } catch (error) {
-        setHasError(true);
-        setErrorMessage(
-          error instanceof Error ? error.message : "Something went wrong. Please try again."
-        );
-      } finally {
-        setIsSaving(false);
+      if (!response.ok) {
+        throw new Error(resData.error || "Failed to save journal entry");
       }
-    },
-    [content, isOverLimit, userId]
-  );
 
-  const loadEntries = useCallback(
-    async (page: number = 1) => {
-      setIsLoadingEntries(true);
-      try {
-        const response = await fetch(`/api/journal?userId=${userId}&page=${page}`);
-        const data = await response.json();
-        if (response.ok) {
-          setEntries(data.data || []);
-        }
-      } catch (error) {
-        setHasError(true);
-      } finally {
-        setIsLoadingEntries(false);
+      if (resData.isCrisisDetected) {
+        setIsCrisisDetected(true);
+        setCrisisMessage(resData.crisis);
       }
-    },
-    [userId]
-  );
+
+      // Sync with real data
+      mutate();
+      setContent("");
+      return resData;
+    } catch (err) {
+      mutate(); // Revert on failure
+      setHasError(true);
+      setErrorMessage(err instanceof Error ? err.message : "Failed to save entry");
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  }, [content, isOverLimit, history, mutate]);
+
+  const loadHistory = useCallback(async (page: number = 1) => {
+    await mutate();
+  }, [mutate]);
 
   return {
-    content, setContent, charCount, isOverLimit, isSaving, hasError,
-    errorMessage, aiAnalysis, isCrisisDetected, crisisMessage,
-    saveEntry, entries, isLoadingEntries, loadEntries,
+    content, setContent, charCount, isSaving, hasError, errorMessage,
+    isCrisisDetected, crisisMessage, history, isLoadingHistory,
+    isOverLimit, saveEntry, loadHistory,
   };
 }

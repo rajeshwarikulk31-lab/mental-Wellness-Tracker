@@ -41,6 +41,14 @@ export function buildJournalAnalysisPrompt(
     "Please analyse this entry. Identify any hidden stress patterns,",
     "emotional triggers, or signs of burnout they may not have noticed.",
     "Then provide one specific, actionable coping strategy tailored to their situation.",
+    "",
+    'Respond in valid JSON format ONLY:',
+    '{',
+    '  "emotional_summary": "A brief summary of their emotional state and hidden patterns",',
+    '  "detected_triggers": ["trigger1", "trigger2"],',
+    '  "recommended_actions": ["action1"],',
+    '  "burnout_risk": "low" | "medium" | "high"',
+    '}',
   ].join("\n");
 }
 
@@ -97,5 +105,28 @@ export function buildMindfulnessPrompt(
     "4. Each step should include timing guidance",
     "",
     'Respond in valid JSON format: { "title": "...", "description": "...", "steps": ["step1", "step2", ...] }',
+  ].join("\n");
+}
+
+export function buildHistoricalInsightsPrompt(
+  journals: string[],
+  aggregates: any[]
+): string {
+  return [
+    `The student has provided ${journals.length} journal entries over the past week.`,
+    `Here are their daily mood aggregates: ${JSON.stringify(aggregates.map(a => ({ date: a.date, mood: a.avgMood, emotion: a.dominantEmotion })))}`,
+    "",
+    "Journal Entries:",
+    ...journals.map((j, i) => `Day ${i + 1}: "${j}"`),
+    "",
+    "Please analyze these entries together to find long-term patterns, recurring stressors, and overall burnout trends.",
+    "",
+    'Respond in valid JSON format ONLY:',
+    '{',
+    '  "weekly_summary": "Holistic paragraph summarizing their week",',
+    '  "dominant_patterns": ["pattern1", "pattern2"],',
+    '  "improvement_areas": ["area1"],',
+    '  "burnout_trend": "improving" | "stable" | "worsening"',
+    '}',
   ].join("\n");
 }

@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ANALYSIS_LOOKBACK_DAYS } from "@/constants/constants";
 import type { InsightsData, DailyAggregate } from "@/types";
 import type { Emotion } from "@/constants/constants";
-import { getDailyAggregates } from "@/services/database";
+import { getDailyAggregates, getJournalEntries } from "@/services/database";
 import { getDateRangeForPeriod } from "@/utils/date-helpers";
 import { logError } from "@/utils/logger";
 
@@ -76,8 +76,8 @@ function identifyTopStressors(aggregates: DailyAggregate[]): string[] {
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
+    const userId = request.headers.get("x-session-id");
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
@@ -85,17 +85,29 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const { start, end } = getDateRangeForPeriod(ANALYSIS_LOOKBACK_DAYS);
     const dailyAggregates = await getDailyAggregates(userId, start, end);
+    
+    // Fetch last 50 journals for AI pattern recognition
+    const journalsResponse = await getJournalEntries(userId, 1, 50);
+    const journals = journalsResponse.data.map(j => j.content).filter(Boolean) as string[];
 
     const moodAverage = dailyAggregates.length > 0
       ? dailyAggregates.reduce((sum, a) => sum + a.avgMood, 0) / dailyAggregates.length
       : 5;
 
-    const insights: InsightsData = {
+    let aiInsights = null;
+    if (journals.length > 0) {
+       // Only run if we have some journals
+       const { generateHistoricalInsights } = await import("@/services/ai-service");
+       aiInsights = await generateHistoricalInsights(journals, dailyAggregates);
+    }
+
+    const insights: InsightsData & { aiAnalysis?: any } = {
       dailyAggregates,
       overallTrend: calculateTrend(dailyAggregates),
       topStressors: identifyTopStressors(dailyAggregates),
       moodAverage: Math.round(moodAverage * 10) / 10,
       dominantEmotion: findDominantEmotion(dailyAggregates),
+      aiAnalysis: aiInsights,
     };
 
     return NextResponse.json(insights);

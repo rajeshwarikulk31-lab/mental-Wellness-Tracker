@@ -11,7 +11,7 @@ import type { Emotion } from "@/constants/constants";
 import type { InsightsData, DailyAggregate } from "@/types";
 
 interface InsightsDashboardProps {
-  insights: InsightsData | null;
+  insights: (InsightsData & { aiAnalysis?: any }) | null;
   isLoading: boolean;
   hasError: boolean;
   onRefresh: () => void;
@@ -186,6 +186,53 @@ export function InsightsDashboard({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* AI Deep Insights */}
+      {insights.aiAnalysis && (
+        <div className="ai-insights-section card p-4 mt-6 bg-surface-elevated rounded-xl border border-border">
+          <h3 className="text-xl font-semibold mb-3 flex items-center gap-2">
+            <span>🧠</span> AI Weekly Summary
+          </h3>
+          <p className="text-text-secondary leading-relaxed mb-4">
+            {insights.aiAnalysis.weekly_summary}
+          </p>
+
+          {insights.aiAnalysis.dominant_patterns && insights.aiAnalysis.dominant_patterns.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-medium text-text mb-2 text-sm uppercase tracking-wider">Recurring Patterns</h4>
+              <ul className="list-disc pl-5 text-text-secondary">
+                {insights.aiAnalysis.dominant_patterns.map((p: string, i: number) => (
+                  <li key={i} className="mb-1">{p}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {insights.aiAnalysis.improvement_areas && insights.aiAnalysis.improvement_areas.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-medium text-text mb-2 text-sm uppercase tracking-wider">Actionable Focus Areas</h4>
+              <ul className="list-disc pl-5 text-text-secondary">
+                {insights.aiAnalysis.improvement_areas.map((a: string, i: number) => (
+                  <li key={i} className="mb-1">{a}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {insights.aiAnalysis.burnout_trend && (
+             <div className="mt-4 pt-3 border-t border-border/50">
+               <span className="font-medium text-text mr-2">Burnout Risk Trend:</span>
+               <span className={`px-2 py-1 rounded text-sm ${
+                 insights.aiAnalysis.burnout_trend === 'improving' ? 'bg-green-500/10 text-green-400' :
+                 insights.aiAnalysis.burnout_trend === 'worsening' ? 'bg-red-500/10 text-red-400' :
+                 'bg-blue-500/10 text-blue-400'
+               }`}>
+                 {insights.aiAnalysis.burnout_trend.charAt(0).toUpperCase() + insights.aiAnalysis.burnout_trend.slice(1)}
+               </span>
+             </div>
+          )}
         </div>
       )}
     </section>

@@ -35,10 +35,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     recordRequest(sessionId);
 
     const body = await request.json();
-    const { userId, message, conversationHistory = [], mood, emotion } = body;
+    const { message, conversationHistory = [], mood, emotion } = body;
+    const userId = sessionId;
 
-    if (!userId || !message) {
-      return NextResponse.json({ error: "userId and message are required" }, { status: 400 });
+    if (!message) {
+      return NextResponse.json({ error: "message is required" }, { status: 400 });
     }
 
     const sanitisedMessage = sanitiseInput(message);

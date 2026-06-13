@@ -17,15 +17,15 @@ import { useAICompanion } from "@/hooks/useAICompanion";
  * Streams responses via SSE. Crisis detection on both sides.
  */
 export default function CompanionPage() {
-  const { userId } = useSession();
-  const companion = useAICompanion(userId);
+  const { isSessionActive } = useSession();
+  const companion = useAICompanion();
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [companion.messages, companion.streamingContent]);
+  }, [companion.messages]);
 
   const handleSend = () => {
     if (inputText.trim()) {
@@ -66,19 +66,7 @@ export default function CompanionPage() {
             ))}
 
             {/* Streaming content */}
-            {companion.isStreaming && companion.streamingContent && (
-              <div
-                className="chat-bubble chat-bubble--assistant"
-                aria-live="polite"
-                aria-busy="true"
-              >
-                {companion.streamingContent}
-                <span className="cursor-blink" aria-hidden="true">▊</span>
-              </div>
-            )}
-
-            {/* Typing indicator */}
-            {companion.isStreaming && !companion.streamingContent && (
+            {companion.isStreaming && (
               <div className="chat-bubble chat-bubble--assistant">
                 <div className="typing-indicator" aria-label="MindEase is typing">
                   <span className="typing-dot" aria-hidden="true" />

@@ -16,12 +16,12 @@ import { EMOTION_ICONS } from "@/constants/constants";
  * Mood page — log current mood with optimistic updates and view history.
  */
 export default function MoodPage() {
-  const { userId } = useSession();
-  const mood = useMoodLog(userId);
+  const { isSessionActive } = useSession();
+  const mood = useMoodLog();
 
   useEffect(() => {
-    if (userId) mood.loadHistory();
-  }, [userId]);
+    if (isSessionActive) mood.loadHistory();
+  }, [isSessionActive]);
 
   return (
     <div className="page-content">

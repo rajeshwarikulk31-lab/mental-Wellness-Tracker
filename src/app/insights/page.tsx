@@ -18,8 +18,8 @@ import { useInsights } from "@/hooks/useInsights";
  * emotion distribution, and detected stress patterns.
  */
 export default function InsightsPage() {
-  const { userId } = useSession();
-  const { insights, isLoading, hasError, refresh } = useInsights(userId);
+  const { isSessionActive } = useSession();
+  const { insights, isLoading, hasError, loadInsights } = useInsights();
 
   return (
     <div className="page-content">
@@ -34,7 +34,7 @@ export default function InsightsPage() {
           insights={insights}
           isLoading={isLoading}
           hasError={hasError}
-          onRefresh={refresh}
+          onRefresh={loadInsights}
         />
       </main>
       <Navbar />

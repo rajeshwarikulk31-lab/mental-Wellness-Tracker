@@ -40,11 +40,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     recordRequest(sessionId);
 
     const body = await request.json();
-    const { content, mood, emotion, exam, userId } = body;
+    const { content, mood, emotion, exam } = body;
+    const userId = sessionId;
 
-    // Validate required fields
-    if (!content || !mood || !emotion || !exam || !userId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!content || mood === undefined || !emotion || !exam) {
+      return NextResponse.json({ error: "Missing required fields: content, mood, emotion, exam" }, { status: 400 });
     }
 
     // Sanitise and validate
@@ -121,9 +121,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const userId = request.headers.get("x-session-id");
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const pageSize = parseInt(searchParams.get("pageSize") || "30", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
