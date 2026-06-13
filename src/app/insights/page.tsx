@@ -18,7 +18,7 @@ import { useInsights } from "@/hooks/useInsights";
  * emotion distribution, and detected stress patterns.
  */
 export default function InsightsPage() {
-  const { isSessionActive } = useSession();
+  useSession();
   const { insights, isLoading, hasError, loadInsights } = useInsights();
 
   return (

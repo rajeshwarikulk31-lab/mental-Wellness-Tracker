@@ -106,7 +106,7 @@ export function useAICompanion() {
                   }
                   return newMessages;
                 });
-              } catch (e) {
+              } catch {
                 // Parse error on incomplete chunk, ignore
               }
             }

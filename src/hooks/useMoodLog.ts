@@ -19,7 +19,7 @@ export function useMoodLog() {
   
   // Use SWR for caching and automatic revalidation
   const { data, mutate, error } = useSWR('/api/mood', fetcher);
-  const moodHistory: MoodLog[] = data?.data || [];
+  const moodHistory: MoodLog[] = React.useMemo(() => data?.data || [], [data?.data]);
   const isLoadingHistory = !data && !error;
 
   const logMood = useCallback(async () => {

@@ -18,7 +18,7 @@ export function useJournal() {
 
   // SWR handles fetching and caching the history
   const { data, mutate, error } = useSWR('/api/journal', fetcher);
-  const history: JournalEntry[] = data?.data || [];
+  const history: JournalEntry[] = React.useMemo(() => data?.data || [], [data?.data]);
   const isLoadingHistory = !data && !error;
 
   const isOverLimit = content.length > 5000;

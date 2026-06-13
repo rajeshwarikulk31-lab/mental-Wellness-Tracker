@@ -17,7 +17,7 @@ import { useAICompanion } from "@/hooks/useAICompanion";
  * Streams responses via SSE. Crisis detection on both sides.
  */
 export default function CompanionPage() {
-  const { isSessionActive } = useSession();
+  useSession();
   const companion = useAICompanion();
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);

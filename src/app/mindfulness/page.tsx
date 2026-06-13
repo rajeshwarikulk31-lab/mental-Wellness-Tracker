@@ -18,7 +18,7 @@ import type { Emotion } from "@/constants/constants";
  * a guided exercise tailored to that emotional state.
  */
 export default function MindfulnessPage() {
-  const { isSessionActive } = useSession();
+  useSession();
   const mindfulness = useMindfulness();
   const [emotion, setEmotion] = useState<Emotion | null>(null);
   const [moodScore, setMoodScore] = useState(5);
