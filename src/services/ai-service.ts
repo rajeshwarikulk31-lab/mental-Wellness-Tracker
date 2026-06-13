@@ -8,7 +8,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AI_MAX_RESPONSE_TOKENS, CACHE_TTL_MS } from "@/constants/constants";
 import type { Emotion, SupportedExam } from "@/constants/constants";
-import type { AIResponse, CompanionMessage, MindfulnessExercise } from "@/types";
+import type { AIResponse, CompanionMessage, MindfulnessExercise, DailyAggregate } from "@/types";
 import { AIApiError } from "@/types";
 import { detectCrisis } from "@/utils/crisis-detection";
 import { withRetry } from "@/utils/retry";
@@ -92,7 +92,7 @@ async function callGemini(prompt: string): Promise<string> {
     return await withRetry(async () => {
       const client = getGeminiClient();
       const model = client.getGenerativeModel({
-        model: "gemini-2.0-flash",
+        model: "gemini-3-flash-preview",
         systemInstruction: getSystemPrompt(),
         generationConfig: { maxOutputTokens: AI_MAX_RESPONSE_TOKENS },
       });
@@ -204,7 +204,7 @@ import { HistoricalInsightsSchema } from "@/types/schemas";
 
 export async function generateHistoricalInsights(
   journals: string[],
-  aggregates: Record<string, unknown>[]
+  aggregates: DailyAggregate[]
 ): Promise<Record<string, unknown> | null> {
   try {
     const prompt = buildHistoricalInsightsPrompt(journals, aggregates);
@@ -233,7 +233,7 @@ export async function* streamCompanionResponse(
   try {
     const client = getGeminiClient();
     const model = client.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: getSystemPrompt(),
       generationConfig: { maxOutputTokens: AI_MAX_RESPONSE_TOKENS },
     });

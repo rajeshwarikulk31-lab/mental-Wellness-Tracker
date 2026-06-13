@@ -41,20 +41,13 @@ export function useSession(): UseSessionReturn {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await fetch("/api/session");
-        if (!res.ok) throw new Error("No session");
+        const stored = localStorage.getItem("mindease_session");
+        if (!stored) throw new Error("No session");
         
-        const data = await res.json();
-        const session: SessionData = data.session;
+        const session = JSON.parse(stored);
         
         const elapsed = Date.now() - session.lastActive;
         if (elapsed < SESSION_TIMEOUT_MS) {
-          // Instead of calling setState directly, wait for next tick if needed, 
-          // or just call them, but Next.js complains if we do this synchronously.
-          // Since this is async, it should be fine, but the linter complains.
-          // Wait, the linter says "Calling setState synchronously within an effect".
-          // Because the await makes it asynchronous, it's fine. Wait, the error was "Calling setState synchronously within an effect".
-          // Actually, if we just put it in a timeout or ignore the rule. Let's disable the rule for this block.
           setSelectedExam(session.exam);
           setIsOnboarded(true);
           resetTimer();

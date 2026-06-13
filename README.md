@@ -15,7 +15,7 @@ MindEase is a production-grade Generative AI-powered Mental Wellness Tracker des
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript (Strict mode)
-- **AI**: Google Gemini 2.0 Flash API (Server-side proxying only)
+- **AI**: Google Gemini 2.5 Flash API (Server-side proxying only)
 - **Database**: SQLite (via pure JS `sql.js` for environment compatibility)
 - **Styling**: Vanilla CSS (Premium dark-mode glassmorphism, fully WCAG AA accessible)
 

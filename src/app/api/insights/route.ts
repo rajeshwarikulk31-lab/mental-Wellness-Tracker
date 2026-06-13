@@ -107,7 +107,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       topStressors: identifyTopStressors(dailyAggregates),
       moodAverage: Math.round(moodAverage * 10) / 10,
       dominantEmotion: findDominantEmotion(dailyAggregates),
-      aiAnalysis: aiInsights,
+      aiAnalysis: aiInsights ?? undefined,
     };
 
     return NextResponse.json(insights);

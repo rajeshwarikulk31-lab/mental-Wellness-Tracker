@@ -14,6 +14,7 @@ export function useJournal() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCrisisDetected, setIsCrisisDetected] = useState(false);
   const [crisisMessage, setCrisisMessage] = useState<{ message: string; helpline: string } | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
 
   // SWR handles fetching and caching the history
   const { data, mutate, error } = useSWR('/api/journal', fetcher);
@@ -30,6 +31,7 @@ export function useJournal() {
     setHasError(false);
     setIsCrisisDetected(false);
     setCrisisMessage(null);
+    setAiAnalysis(null);
 
     // Optimistic UI update
     const optimisticEntry = {
@@ -65,6 +67,10 @@ export function useJournal() {
         setIsCrisisDetected(true);
         setCrisisMessage(resData.crisis);
       }
+      
+      if (resData.entry?.aiAnalysis) {
+        setAiAnalysis(resData.entry.aiAnalysis);
+      }
 
       // Sync with real data
       mutate();
@@ -87,6 +93,6 @@ export function useJournal() {
   return {
     content, setContent, charCount, isSaving, hasError, errorMessage,
     isCrisisDetected, crisisMessage, history, isLoadingHistory,
-    isOverLimit, saveEntry, loadHistory,
+    isOverLimit, saveEntry, loadHistory, aiAnalysis,
   };
 }

@@ -12,7 +12,12 @@ export const metadata: Metadata = {
     "mood tracker", "journaling", "mindfulness", "student mental health",
     "stress management", "AI wellness companion",
   ],
-  viewport: "width=device-width, initial-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0a0a1a",
 };
 
 /**
@@ -27,7 +32,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <meta name="theme-color" content="#0a0a1a" />
       </head>
       <body>
         {children}

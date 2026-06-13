@@ -7,7 +7,7 @@
 
 import { AI_SYSTEM_PROMPT } from "@/constants/constants";
 import type { Emotion, SupportedExam } from "@/constants/constants";
-import type { CompanionMessage } from "@/types";
+import type { CompanionMessage, DailyAggregate } from "@/types";
 
 /**
  * Returns the static system prompt for the AI companion.
@@ -110,7 +110,7 @@ export function buildMindfulnessPrompt(
 
 export function buildHistoricalInsightsPrompt(
   journals: string[],
-  aggregates: Record<string, unknown>[]
+  aggregates: DailyAggregate[]
 ): string {
   return [
     `The student has provided ${journals.length} journal entries over the past week.`,

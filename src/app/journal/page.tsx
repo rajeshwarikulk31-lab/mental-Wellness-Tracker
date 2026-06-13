@@ -62,7 +62,7 @@ export default function JournalPage() {
 
         <section className="page-section">
           <AIResponsePanel
-            analysis={journal.aiAnalysis}
+            analysis={journal.aiAnalysis ? { content: journal.aiAnalysis, isCrisisDetected: journal.isCrisisDetected, suggestedAction: null, timestamp: '' } : null}
             streamingContent=""
             isStreaming={false}
             isLoading={journal.isSaving}
@@ -72,10 +72,10 @@ export default function JournalPage() {
         </section>
 
         {/* Previous entries */}
-        {journal.entries.length > 0 && (
+        {journal.history.length > 0 && (
           <section className="page-section" aria-label="Previous journal entries">
             <h3>Previous Entries</h3>
-            {journal.entries.map((entry) => (
+            {journal.history.map((entry) => (
               <article key={entry.id} className="card" style={{ marginBottom: "var(--space-4)" }}>
                 <p style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>
                   {new Date(entry.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
